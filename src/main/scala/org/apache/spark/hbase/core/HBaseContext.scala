@@ -41,7 +41,7 @@ class HBaseContext(
     makeGet: (T) => Get,
     convertResult: (Result) => U): RDD[U] = {
     rdd.mapPartitions[U]{it =>
-    val table=HbaseStorageCache.getTable(zookeeper, tableName)
+    val table=HbaseConnectionCache.getTable(zookeeper, tableName)
     it.grouped(batchSize).flatMap { ts =>
       table.get(ts.map { makeGet(_) }.toList)
       .filter { x => x!=null && !x.isEmpty() }
