@@ -15,8 +15,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.hadoop.hbase.client.Get
 import scala.collection.JavaConversions._
 import org.apache.spark.api.java.JavaSparkContext.fakeClassTag
-class HBaseContext(
-    @transient sc: SparkContext,
+class SparkHBaseContext(
+    @transient val sc: SparkContext,
     @transient config: Configuration) extends Serializable {
   val conf = sc.broadcast(new SerializableWritable(config))
   val zookeeper=conf.value.value.get("hbase.zookeeper.quorum")
@@ -29,6 +29,18 @@ class HBaseContext(
     f: ((ImmutableBytesWritable, Result)) => T):RDD[T]= {
     var job: Job = new Job(conf.value.value)
     TableMapReduceUtil.initTableMapperJob(tableName, scan, classOf[IdentityTableMapper], null, null, job)
+    sc.newAPIHadoopRDD(job.getConfiguration(),
+      classOf[TableInputFormat],
+      classOf[ImmutableBytesWritable],
+      classOf[Result]).map(f)
+  }
+  /*
+   * 读取全部hbase数据
+   */
+  def bulkAllRDD[T:ClassTag](
+      tableName: String,
+      f: ((ImmutableBytesWritable, Result)) => T):RDD[T]= {
+    var job: Job = new Job(conf.value.value)
     sc.newAPIHadoopRDD(job.getConfiguration(),
       classOf[TableInputFormat],
       classOf[ImmutableBytesWritable],

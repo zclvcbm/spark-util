@@ -1,6 +1,6 @@
 package org.apache.spark.test
 
-import org.apache.spark.hbase.core.HBaseContext
+import org.apache.spark.hbase.core.SparkHBaseContext
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.hadoop.hbase.client.Scan
@@ -12,14 +12,14 @@ val tablename = ""
     
     val conf = new SparkConf()
     val sc = new SparkContext(conf)
-    val hc = new HBaseContext(sc, sc.hadoopConfiguration)
+    val hc = new SparkHBaseContext(sc, sc.hadoopConfiguration)
     val rdd = sc.parallelize(Array("1"))
-    
+   
   }
-  def testBulkGet(hc:HBaseContext,rdd:RDD[String]){
+  def testBulkGet(hc:SparkHBaseContext,rdd:RDD[String]){
     val r1 = hc.bulkGetRDD(tablename, rdd, makeGet, convertResult)
   }
-  def testBulkScan(hc:HBaseContext){
+  def testBulkScan(hc:SparkHBaseContext){
     val r2 = hc.bulkScanRDD(tablename, new Scan(), f)
   }
   
