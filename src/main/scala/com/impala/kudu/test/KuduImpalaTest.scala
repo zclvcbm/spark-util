@@ -3,7 +3,7 @@ package com.impala.kudu.test
 import java.sql.DriverManager
 import java.util.Date
 
-object App {
+object KuduImpalaTest {
   // set the impalad host
   val IMPALAD_HOST = "192.168.10.194";
   // port 21050 is the default impalad JDBC port 

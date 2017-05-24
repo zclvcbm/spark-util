@@ -7,9 +7,20 @@ import org.apache.kudu.client.KuduPredicate
 object KuduClientTest {
   def main(args: Array[String]): Unit = {
     val client=new KuduClientBuilder("kylin-master2").build()
-    val tables=client.getTablesList
-    tables.getTablesList.foreach { println }
-    //val session=client.newSession()
-    //val table=client.openTable("")
+    val table=client.openTable("impala::default.kudu_pc_log")
+    client.getTablesList.getTablesList.foreach { println }
+    val scanner = client.newScanTokenBuilder(table).build()
+    scanner.foreach { sk =>
+      
+      println(sk.getTablet.getPartition)
+      println( sk.getTablet.getReplicas)
+      
+    
+    }
+    
+                    
+    
+    
+    
   }
 }
