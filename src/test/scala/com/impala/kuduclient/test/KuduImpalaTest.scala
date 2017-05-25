@@ -1,4 +1,4 @@
-package com.impala.kudu.test
+package com.impala.kuduclient.test
 
 import java.sql.DriverManager
 import java.util.Date
@@ -10,17 +10,17 @@ object KuduImpalaTest {
   val IMPALAD_JDBC_PORT = "21050";
   val CONNECTION_URL = "jdbc:hive2://" + IMPALAD_HOST + ':' + IMPALAD_JDBC_PORT + "/;auth=noSasl";
   val JDBC_DRIVER_NAME = "org.apache.hive.jdbc.HiveDriver";
-  def main(args: Array[String]) {
-    //upsert()
-   execute
-  }
-  def execute() {
-    val sql="""select siteid,plan,activity,slot from
-      kudu_pc_log group by siteid,plan,activity,slot limit 10
-      """
-    Class.forName(JDBC_DRIVER_NAME);
+  Class.forName(JDBC_DRIVER_NAME);
     val con = DriverManager.getConnection(CONNECTION_URL);
     val stmt = con.createStatement();
+  def main(args: Array[String]) {
+    //upsert()
+      val sql="""select siteid,plan,activity,slot from
+      kudu_pc_log group by siteid,plan,activity,slot limit 10
+      """
+    executeQuery(sql)
+  }
+  def executeQuery(sql:String) {
     for(i<- 1 to 4){
     	val s=new Date().getTime
     	val rs = stmt.executeQuery(sql);
@@ -30,6 +30,9 @@ object KuduImpalaTest {
     	}
     }
       
+  }
+  def execute(sql:String){
+    stmt.execute(sql)
   }
   def upsert() {
     var sql = s"""upsert into kudu_pc_log(deliverytime,siteid,plan,activity,uid,slot) 

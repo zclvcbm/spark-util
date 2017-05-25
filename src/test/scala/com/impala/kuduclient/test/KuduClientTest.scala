@@ -1,4 +1,4 @@
-package com.impala.kudu.test
+package com.impala.kuduclient.test
 
 import org.apache.kudu.client.KuduClient
 import org.apache.kudu.client.KuduClient.KuduClientBuilder

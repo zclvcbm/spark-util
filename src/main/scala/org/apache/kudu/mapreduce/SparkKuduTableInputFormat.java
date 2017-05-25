@@ -145,9 +145,9 @@ public class SparkKuduTableInputFormat extends InputFormat<NullWritable, RowResu
       }
       List<KuduScanToken> tokens = tokenBuilder.build();
 
-      List<InputSplit> splits = new ArrayList<>(tokens.size());
+      List<InputSplit> splits = new ArrayList<InputSplit>(tokens.size());
       for (KuduScanToken token : tokens) {
-        List<String> locations = new ArrayList<>(token.getTablet().getReplicas().size());
+        List<String> locations = new ArrayList<String>(token.getTablet().getReplicas().size());
         for (LocatedTablet.Replica replica : token.getTablet().getReplicas()) {
           locations.add(reverseDNS(replica.getRpcHost(), replica.getRpcPort()));
         }
@@ -229,7 +229,7 @@ public class SparkKuduTableInputFormat extends InputFormat<NullWritable, RowResu
     if (projectionConfig == null || projectionConfig.equals("*")) {
       this.projectedCols = null; // project the whole table
     } else if ("".equals(projectionConfig)) {
-      this.projectedCols = new ArrayList<>();
+      this.projectedCols = new ArrayList<String>();
     } else {
       this.projectedCols = Lists.newArrayList(Splitter.on(',').split(projectionConfig));
 
@@ -243,7 +243,7 @@ public class SparkKuduTableInputFormat extends InputFormat<NullWritable, RowResu
       }
     }
 
-    this.predicates = new ArrayList<>();
+    this.predicates = new ArrayList<KuduPredicate>();
     try {
       InputStream is =
           new ByteArrayInputStream(Base64.decodeBase64(conf.get(ENCODED_PREDICATES_KEY, "")));

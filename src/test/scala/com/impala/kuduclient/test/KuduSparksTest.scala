@@ -1,4 +1,4 @@
-package com.impala.kudu.test
+package com.impala.kuduclient.test
 
 import org.apache.kudu.spark.kudu._
 import org.apache.spark.SparkContext
@@ -26,14 +26,15 @@ object KuduSparksTest {
   import sparksql.implicits._
   val a = new KuduContext(kuduMaster, sc)
   def main(args: Array[String]): Unit = {
-    getKuduRDD
+    writetoKudu
   }
   def writetoKudu() {
     val tableName = "impala::default.student"
-    val rdd = sc.parallelize(Array("k", "b", "a")).map { n => STU(n.hashCode, n) }
+    val rdd = sc.parallelize(Array("1", "4", "6")).map { n => STU(n.toInt, n) }
     val data = rdd.toDF()
-    a.insertRows(data, tableName)
-
+    a.insertRows(data, tableName)//如果主键存在就会报错
+    a.insertIgnoreRows(data, tableName)//主键如果存在就跳过
+    println("------------------")
   }
   def getKuduRDD() {
 
