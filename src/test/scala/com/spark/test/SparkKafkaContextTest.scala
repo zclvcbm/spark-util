@@ -19,7 +19,8 @@ object SparkKafkaContextTest {
       "metadata.broker.list" -> brokers,
       "serializer.class" -> "kafka.serializer.StringEncoder",
       "group.id" -> "group.id",
-      "kafka.last.consum" -> "last")
+      SparkKafkaContext.WRONG_FROM -> "last",//EARLIEST
+      SparkKafkaContext.CONSUMER_FROM -> "consum")
     val topics = Set("test")
     val kafkadataRdd = skc.kafkaRDD(kp, topics, msgHandle2)
     RDD.rddToPairRDDFunctions(kafkadataRdd)
