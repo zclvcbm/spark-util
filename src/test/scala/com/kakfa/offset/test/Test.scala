@@ -17,7 +17,7 @@ val broker="kafka1,kafka2,kafka3"
       "serializer.class" -> "kafka.serializer.StringEncoder",
       "group.id" -> groupid)
   KafkaOffsetRecord.recordKafkaOffset(kafkaParams, groupid, day, zk, Set("test"))
-  
+  KafkaOffsetRecord.getKafkaOffset(kafkaParams, groupid, day, zk, broker, Set("test"))
   }
 
 }
