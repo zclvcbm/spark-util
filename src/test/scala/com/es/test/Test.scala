@@ -22,24 +22,25 @@ object Test {
     confs.set("es.port", "9200")
     confs.set("cluster.name", clusterName)
     val sc = new SparkContext(confs)
-    func2(sc)
+    func1(sc)
 
   }
   def func1(sc: SparkContext) {
+    val query = s"""{"query":${getQuery}}"""
+    println(query)
     val conf = new Configuration
     conf.set("es.nodes", "192.168.10.115,192.168.10.110,192.168.10.81")
     conf.setInt("es.port", 9200)
     conf.set("cluster.name", clusterName)
-    conf.set("es.resource", "dataexchange_device_visit_store/deviceVisit")
-    conf.set("es.query", "?q=_id:13__f8758896aa94__20171110");
-    sc.newAPIHadoopRDD(conf, classOf[EsInputFormat[NullWritable, LinkedMapWritable]], classOf[NullWritable], classOf[LinkedMapWritable])
-      .map { x => x._2 }
-      .foreach(println)
+    conf.set("es.resource", "dataexchange_device_tags/deviceTags")
+    conf.set("es.query", query);
+   sc.newAPIHadoopRDD(conf, classOf[EsInputFormat[NullWritable, LinkedMapWritable]], classOf[NullWritable], classOf[LinkedMapWritable])
+    .foreach(println)
   }
   def func2(sc: SparkContext) {
     val query = s"""{"query":${getQuery}}"""
     println(query)
-    //val q = s"""{"query":{"match":{"_id":"http%3A%2F%2Fbbs.zhan.com%2Fthread-337326-1-1.html"}}}"""
+    //val query = s"""{"query":{"match":{"_id":"http%3A%2F%2Fbbs.zhan.com%2Fthread-337326-1-1.html"}}}"""
     sc.esRDD("dataexchange_device_tags/deviceTags", query)
       .foreach(println)
   }
@@ -48,12 +49,13 @@ object Test {
    * 
    */
   def getQuery() = {
-    /*QueryBuilders
-    .matchQuery("_id", "9492bc7ab90b")
-    .toString()*/
-    QueryBuilders.regexpQuery("", "6001941c2d66")
-    QueryBuilders.prefixQuery("_id", "3__")
+    QueryBuilders
+    .matchQuery("probemac","6001946955ff")
     .toString()
+    //正则匹配
+    //QueryBuilders.regexpQuery("", "6001941c2d66")
+    //QueryBuilders.prefixQuery("probemac", "6001941c2d66")
+    //.toString()
     /*QueryBuilders.rangeQuery("creattime")
     .from("2018-01-03 17:37:47")
     .to("2018-01-04 17:37:47")
