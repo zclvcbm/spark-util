@@ -27,7 +27,6 @@ object SparkKafkaContextTest {
     kafkadataRdd.reduceByKey(_+_)
    // kafkadataRdd.map(f)
  
-    
     kafkadataRdd.foreach(println)
     kafkadataRdd.updateOffsets(kp)
     
