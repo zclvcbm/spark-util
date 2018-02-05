@@ -15,6 +15,7 @@ import org.apache.spark.common.util.KafkaConfiguration
 object StreamingKafkaContextTest {
   PropertyConfigurator.configure("conf/log4j.properties")
   def main(args: Array[String]): Unit = {
+    
     run
   }
   def run() {
@@ -26,7 +27,7 @@ object StreamingKafkaContextTest {
       "group.id" -> "testGroupid",
       StreamingKafkaContext.WRONG_FROM -> "last",//EARLIEST
       StreamingKafkaContext.CONSUMER_FROM -> "consum")
-    val topics = Set("testtopic")
+    val topics = Set("smartadsdeliverylog")
     val ds = ssc.createDirectStream[(String, String)](kp, topics, msgHandle)
     ds.foreachRDD { rdd =>
       println(rdd.count)

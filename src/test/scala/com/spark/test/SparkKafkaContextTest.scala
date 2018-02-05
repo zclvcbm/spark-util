@@ -22,12 +22,12 @@ object SparkKafkaContextTest {
       SparkKafkaContext.WRONG_FROM -> "last",//EARLIEST
       SparkKafkaContext.CONSUMER_FROM -> "consum")
     val topics = Set("test")
-    val kafkadataRdd = skc.kafkaRDD(kp, topics, msgHandle2)
-    RDD.rddToPairRDDFunctions(kafkadataRdd)
+    val kafkadataRdd = skc.kafkaRDD[((String, Int, Long), String)](kp, topics, msgHandle2)
+    
+    //RDD.rddToPairRDDFunctions(kafkadataRdd)
     kafkadataRdd.reduceByKey(_+_)
    // kafkadataRdd.map(f)
  
-    
     kafkadataRdd.foreach(println)
     kafkadataRdd.updateOffsets(kp)
     
