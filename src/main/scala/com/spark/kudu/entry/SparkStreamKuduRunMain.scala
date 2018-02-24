@@ -14,6 +14,8 @@ import org.apache.kudu.spark.kudu.KuduContext
 import org.apache.spark.sql.SQLContext
 import java.util.Date
 import java.text.SimpleDateFormat
+import org.apache.spark.core.StreamingKafkaContext
+
 /**
  * @author LMQ
  * @description 将sparkstreaming的数据写进kudu。同时使用impala生成OLAP报表存成kudu。
@@ -30,7 +32,7 @@ object SparkStreamKuduRunMain {
     val kuducontext = new KuduContext(kudumaster, sc)
     val sparksql = new SQLContext(sc)
     import sparksql.implicits._
-    val ssc = new StreamingContext(sc, Seconds(time))
+    val ssc = new StreamingKafkaContext(sc, Seconds(time))
     var kp = Map[String, String](
       "metadata.broker.list" -> brokers,
       "serializer.class" -> "kafka.serializer.StringEncoder",
@@ -81,7 +83,7 @@ object SparkStreamKuduRunMain {
       LOG.info("##### rt_rtbreport_byhour_channel_plan ")
       KuduImpalaUtil.execute(rt_rtbreport_byhour_channel_plan(statdate))
       LOG.info(s"""time : ${new Date().getTime - s}""")
-      rdd.updateOffsets(kp, "test")
+      ssc.updateRDDOffsets(kp, "test", rdd)
       LOG.info("##### END ##################")
     }
 
