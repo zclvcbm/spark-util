@@ -5,7 +5,7 @@ import java.util.Properties
 import java.io.FileInputStream
 import java.io.InputStreamReader
 import scala.collection.JavaConversions._
-trait ConfigurationFactoryTool {
+object ConfigurationFactoryTool {
   def initConf(path: String,conf:Configuration){
     val property = getConfigFromFilePath(path)
     var keys = property.propertyNames()

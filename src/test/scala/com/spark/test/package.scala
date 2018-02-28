@@ -5,7 +5,7 @@ import org.apache.spark.common.util.ConfigurationFactoryTool
 import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.clients.producer.ProducerRecord
 
-package object test extends ConfigurationFactoryTool {
+package object test {
   val zookeeper = "solr1,solr2,mongodb3"
   val brokers = "kafka1:9092,kafka2:9092,kafka3:9092"
   val outTopic = "test"

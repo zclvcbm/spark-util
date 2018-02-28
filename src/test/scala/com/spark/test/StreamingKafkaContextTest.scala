@@ -12,6 +12,7 @@ import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.core.StreamingKafkaContext
 import org.apache.spark.core.SparkKafkaContext
 import org.apache.spark.common.util.KafkaConfiguration
+import org.apache.spark.common.util.ConfigurationFactoryTool
 object StreamingKafkaContextTest {
   PropertyConfigurator.configure("conf/log4j.properties")
   def main(args: Array[String]): Unit = {
@@ -44,7 +45,7 @@ object StreamingKafkaContextTest {
    */
   def runJobWithConf() {
     val conf = new ConfigurationTest()
-    initConf("conf/config.properties", conf)
+    ConfigurationFactoryTool.initConf("conf/config.properties", conf)
     initJobConf(conf)
     println(conf.getKV())
     val scf = new SparkConf().setMaster("local[2]").setAppName("Test")
