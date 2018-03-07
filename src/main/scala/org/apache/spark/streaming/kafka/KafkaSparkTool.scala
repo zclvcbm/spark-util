@@ -16,13 +16,15 @@ private[spark] trait KafkaSparkTool {
   val WRONG_GROUP_FROM = "wrong.groupid.from" //新用户或者过期用户 重新读取的点 （最新或者最旧）
   val maxMessagesPerPartitionKEY = "spark.streaming.kafka.maxRatePerPartition"
   /**
-   * init KafkaCluster
+   * @description init KafkaCluster
    */
-  def instance(kp: Map[String, String]) {
+  def instance(
+      kp: Map[String, String]) {
     if (kc == null) kc = new KafkaCluster(kp)
   }
   /**
-   * get consumer offset
+   * @description get consumer offset
+   * @description 
    */
   def getConsumerOffset(
     kp: Map[String, String],

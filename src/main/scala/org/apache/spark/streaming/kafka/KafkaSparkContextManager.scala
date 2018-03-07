@@ -17,7 +17,7 @@ import org.apache.spark.SparkContext
 
 private[spark] object KafkaSparkContextManager
     extends KafkaSparkTool {
-  val lastOrConsum: String = "LAST"
+  val defualtFrom: String = "LAST"
   logname = "KafkaSparkContextManager"
   /**
    * @author LMQ
@@ -43,7 +43,7 @@ private[spark] object KafkaSparkContextManager
     val consumerOffsets: Map[TopicAndPartition, Long] =
       if (fromOffset == null) {
         val last = if (kp.contains(KAFKA_CONSUMER_FROM)) kp.get(KAFKA_CONSUMER_FROM).get
-        else lastOrConsum
+        else defualtFrom
         last.toUpperCase match {
           case "LAST"     => getLatestOffsets(topics, kp)
           case "CONSUM"   => getConsumerOffset(kp, groupId, topics)
@@ -83,7 +83,7 @@ private[spark] object KafkaSparkContextManager
     val consumerOffsets: Map[TopicAndPartition, Long] =
       if (fromOffset == null) {
         val last = if (kp.contains(KAFKA_CONSUMER_FROM)) kp.get(KAFKA_CONSUMER_FROM).get
-        else lastOrConsum
+        else defualtFrom
         last.toUpperCase match {
           case "LAST"     => getLatestOffsets(topics, kp)
           case "CONSUM"   => getConsumerOffset(kp, groupId, topics)
