@@ -19,7 +19,7 @@ kafka version 0.8
 * 提供一个kafkaCluster。可以用来单独获取kafka信息，如最新偏移量等信息
 * 修改 增加updateOffsets方法不用提供group id
 * 增加 更新偏移量至最新操作。updataOffsetToLastest
-* 修改，在kp里面设置spark.streaming.kafka.maxRatePerPartition。这样可以针对不同的topic使用不同的limit
+* 修改，在kp里面设置spark.streaming.kafka.maxRatePerPartition。
 
 
   
