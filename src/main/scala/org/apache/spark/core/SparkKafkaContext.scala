@@ -11,21 +11,20 @@ import kafka.common.TopicAndPartition
 import kafka.serializer.StringDecoder
 import org.apache.spark.rdd.RDD
 class SparkKafkaContext {
-  var sc: SparkContext = null
-  def this(sc: SparkContext) {
+  var sparkcontext: SparkContext = null
+  def this(sparkcontext: SparkContext) {
     this()
-    this.sc = sc
+    this.sparkcontext = sparkcontext
   }
   def this(conf: SparkConf) {
     this()
-    sc = new SparkContext(conf)
+    sparkcontext = new SparkContext(conf)
   }
-  def sparkcontext() = sc
   /**
    *
    */
   def broadcast[T: ClassTag](value: T) = {
-    sc.broadcast(value)
+    sparkcontext.broadcast(value)
   }
   
   def getRDDOffset[T](rdd:RDD[T])={
@@ -62,7 +61,7 @@ class SparkKafkaContext {
     kp: Map[String, String],
     topics: Set[String],
     msgHandle: (MessageAndMetadata[K, V]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[K, V, KD, VD, R](sc, kp, topics, null, msgHandle)
+    KafkaSparkContextManager.createKafkaRDD[K, V, KD, VD, R](sparkcontext, kp, topics, null, msgHandle)
   }
     /**
    * 创建 kafkaDataRDD
@@ -71,7 +70,7 @@ class SparkKafkaContext {
     kp: Map[String, String],
     topics: Set[String],
     msgHandle: (MessageAndMetadata[String, String]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sc, kp, topics, null, msgHandle)
+    KafkaSparkContextManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sparkcontext, kp, topics, null, msgHandle)
   }
   /**
    * 创建kafkaRDD 但是提供fromOffset
@@ -81,7 +80,7 @@ class SparkKafkaContext {
     topics: Set[String],
     fromOffset: Map[TopicAndPartition, Long],
     msgHandle: (MessageAndMetadata[K, V]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[K, V, KD, VD, R](sc, kp, topics, fromOffset, msgHandle)
+    KafkaSparkContextManager.createKafkaRDD[K, V, KD, VD, R](sparkcontext, kp, topics, fromOffset, msgHandle)
   }
   /**
    * 现在读取条数（每个分区）
@@ -91,7 +90,7 @@ class SparkKafkaContext {
     topics: Set[String],
     maxMessagesPerPartition: Int,
     msgHandle: (MessageAndMetadata[String, String]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sc, kp, topics, null, maxMessagesPerPartition, msgHandle)
+    KafkaSparkContextManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sparkcontext, kp, topics, null, maxMessagesPerPartition, msgHandle)
   }
 }
 object SparkKafkaContext extends SparkKafkaConfsKey {

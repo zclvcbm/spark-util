@@ -15,24 +15,24 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.common.util.KafkaConfiguration
 
 class StreamingKafkaContext {
-  var ssc: StreamingContext = null
+  var streamingContext: StreamingContext = null
   var sc: SparkContext = null
 
-  def this(ssc: StreamingContext) {
+  def this(streamingContext: StreamingContext) {
     this()
-    this.ssc = ssc
-    this.sc = ssc.sparkContext
+    this.streamingContext = streamingContext
+    this.sc = streamingContext.sparkContext
   }
   def this(sc: SparkContext, batchDuration: Duration) {
     this()
     this.sc = sc
-    ssc = new StreamingContext(sc, batchDuration)
+    streamingContext = new StreamingContext(sc, batchDuration)
   }
   def start() {
-    ssc.start()
+    streamingContext.start()
   }
   def awaitTermination() {
-    ssc.awaitTermination
+    streamingContext.awaitTermination
   }
   //将当前的topic的groupid更新至最新的offsets
   def updataOffsetToLastest(topics: Set[String], kp: Map[String, String]) = {
@@ -62,24 +62,24 @@ class StreamingKafkaContext {
     topics: Set[String],
     fromOffset: Map[TopicAndPartition, Long],
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](ssc, kp, topics, fromOffset, msgHandle)
+    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, kp, topics, fromOffset, msgHandle)
   }
   def createDirectStream[R: ClassTag](
     kp: Map[String, String],
     topics: Set[String],
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](ssc, kp, topics, null, msgHandle)
+    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, kp, topics, null, msgHandle)
   }
   def createDirectStream[R: ClassTag](
     conf: KafkaConfiguration,
     fromOffset: Map[TopicAndPartition, Long],
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](ssc, conf, fromOffset, msgHandle)
+    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, fromOffset, msgHandle)
   }
   def createDirectStream[R: ClassTag](
     conf: KafkaConfiguration,
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](ssc, conf, null, msgHandle)
+    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, null, msgHandle)
   }
 }
 object StreamingKafkaContext extends SparkKafkaConfsKey {
