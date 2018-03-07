@@ -10,7 +10,7 @@ import org.apache.spark.rdd.RDD
 object SparkKafkaContextTest {
   /**
    * 离线方式 读取kafka数据
-   * 测试 SparkKafkaContext
+   * 测试 SparkKafkaContext类
    */
   def main(args: Array[String]): Unit = {
     val skc = new SparkKafkaContext(
