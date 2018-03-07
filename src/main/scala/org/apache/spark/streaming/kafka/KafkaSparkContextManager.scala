@@ -20,12 +20,15 @@ private[spark] object KafkaSparkContextManager
   val lastOrConsum: String = "LAST"
   logname = "KafkaSparkContextManager"
   /**
-   * 创建一个 kafkaDataRDD
+   * @author LMQ
+   * @time 2018.03.07
+   * @description 创建一个 kafkaDataRDD
    * 这个kafkaDataRDD是自己定义的，可以自己添加很多自定义的功能（如：更新offset）
    * 读取kafka数据有三种方式：
-   * 1 ： 从最新开始 last
-   * 2 ：从上次消费开始 consum
-   * 3 ：从自定义的offset开始 CUSTOM
+   * @param 1 ： 从最新开始 last
+   * 				2 ：从上次消费开始 consum
+   * 				3:
+   * 				34：从自定义的offset开始 CUSTOM
    */
   def createKafkaRDD[K: ClassTag, V: ClassTag, KD <: Decoder[K]: ClassTag, VD <: Decoder[V]: ClassTag, R: ClassTag](
     sc: SparkContext,
@@ -42,10 +45,11 @@ private[spark] object KafkaSparkContextManager
         val last = if (kp.contains(KAFKA_CONSUMER_FROM)) kp.get(KAFKA_CONSUMER_FROM).get
         else lastOrConsum
         last.toUpperCase match {
-          case "LAST"   => getLatestOffsets(topics, kp)
-          case "CONSUM" => getConsumerOffset(kp, groupId, topics)
-          case "CUSTOM" => getSelfOffsets(kp)
-          case _        => log.info(s"""${KAFKA_CONSUMER_FROM} must LAST or CONSUM,defualt is LAST"""); getLatestOffsets(topics, kp)
+          case "LAST"     => getLatestOffsets(topics, kp)
+          case "CONSUM"   => getConsumerOffset(kp, groupId, topics)
+          case "EARLIEST" => getEarliestOffsets(topics, kp)
+          case "CUSTOM"   => getSelfOffsets(kp)
+          case _          => log.info(s"""${KAFKA_CONSUMER_FROM} must LAST or CONSUM,defualt is LAST"""); getLatestOffsets(topics, kp)
         }
       } else fromOffset
     //consumerOffsets.foreach(x=>log.info(x.toString))
@@ -81,9 +85,11 @@ private[spark] object KafkaSparkContextManager
         val last = if (kp.contains(KAFKA_CONSUMER_FROM)) kp.get(KAFKA_CONSUMER_FROM).get
         else lastOrConsum
         last.toUpperCase match {
-          case "LAST"   => getLatestOffsets(topics, kp)
-          case "CONSUM" => getConsumerOffset(kp, groupId, topics)
-          case _        => log.info(s"""${KAFKA_CONSUMER_FROM} must LAST or CONSUM,defualt is LAST"""); getLatestOffsets(topics, kp)
+          case "LAST"     => getLatestOffsets(topics, kp)
+          case "CONSUM"   => getConsumerOffset(kp, groupId, topics)
+          case "EARLIEST" => getEarliestOffsets(topics, kp)
+          case "CUSTOM"   => getSelfOffsets(kp)
+          case _          => log.info(s"""${KAFKA_CONSUMER_FROM} must LAST or CONSUM,defualt is LAST"""); getLatestOffsets(topics, kp)
         }
       } else fromOffset
     val untilOffsets = clamp(latestLeaderOffsets(consumerOffsets), consumerOffsets, maxMessagesPerPartition)
@@ -119,9 +125,9 @@ private[spark] object KafkaSparkContextManager
       o.right.get
     }
   }
- /**
-  * 获取 untiloffset
-  */
+  /**
+   * 获取 untiloffset
+   */
   def clamp(leaderOffsets: Map[TopicAndPartition, LeaderOffset],
             currentOffsets: Map[TopicAndPartition, Long],
             maxMessagesPerPartition: Int): Map[TopicAndPartition, LeaderOffset] = {

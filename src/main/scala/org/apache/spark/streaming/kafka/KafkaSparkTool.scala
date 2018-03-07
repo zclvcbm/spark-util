@@ -27,8 +27,7 @@ private[spark] trait KafkaSparkTool {
   def getConsumerOffset(
     kp: Map[String, String],
     groupId: String,
-    topics: Set[String]
-    ) = {
+    topics: Set[String]) = {
     instance(kp)
     var offsets: Map[TopicAndPartition, Long] = Map()
     topics.foreach { topic =>
@@ -56,19 +55,19 @@ private[spark] trait KafkaSparkTool {
             val earliestLeaderOffset = earliestLeaderOffsets(tp).offset
             val lastoffset = partLastOffsets.get(tp).offset
             if (n > lastoffset || n < earliestLeaderOffset) { //如果offset超过了最新的//消费过，但是过时了，就从最新开始消费
-              log.warn("-- Consumer offset is OutTime --- "+tp+"->"+n)
+              log.warn("-- Consumer offset is OutTime --- " + tp + "->" + n)
               if (kp.contains(WRONG_GROUP_FROM)) {
                 kp.get(WRONG_GROUP_FROM).get.toUpperCase() match {
                   case "EARLIEST" => offsets += (tp -> earliestLeaderOffset)
                   case _          => offsets += (tp -> lastoffset)
                 }
-              }else{
+              } else {
                 log.warn("-- Use EARLIEST Offset (set 'wrong.groupid.from') -- ")
                 offsets += (tp -> earliestLeaderOffset)
               }
             } else {
               offsets += (tp -> n)
-          } //消费者的offsets正常
+            } //消费者的offsets正常
         })
       } else {
         log.warn(" New Group ID : " + groupId)
@@ -111,20 +110,38 @@ private[spark] trait KafkaSparkTool {
     if (o.isLeft)
       println(s"Error updating the offset to Kafka cluster: ${o.left.get}")
   }
-  /*
- *  "largest"/"smallest"
- * 
- */
-  def getLatestOffsets(topics: Set[String], kafkaParams: Map[String, String]) = {
+  /**
+   * @description 获取最新的offset
+   *
+   */
+  def getLatestOffsets(
+      topics: Set[String], 
+      kafkaParams: Map[String, String]) = {
     instance(kafkaParams)
-    val reset = kafkaParams.get("auto.offset.reset").map(_.toLowerCase)
     var fromOffsets = (for {
       topicPartitions <- kc.getPartitions(topics).right
-      leaderOffsets <- (if (reset == Some("smallest")) {
-        kc.getEarliestLeaderOffsets(topicPartitions)
-      } else {
-        kc.getLatestLeaderOffsets(topicPartitions)
-      }).right
+      leaderOffsets <- (kc.getLatestLeaderOffsets(topicPartitions)).right
+    } yield {
+      val fromOffsets = leaderOffsets.map {
+        case (tp, lo) =>
+          (tp, lo.offset)
+      }
+      fromOffsets
+    }).fold(
+      errs => throw new SparkException(errs.mkString("\n")),
+      ok => ok)
+    fromOffsets
+  }
+  /**
+   * @description 获取最早的offset
+   */
+  def getEarliestOffsets(
+    topics: Set[String],
+    kafkaParams: Map[String, String]) = {
+    instance(kafkaParams)
+    var fromOffsets = (for {
+      topicPartitions <- kc.getPartitions(topics).right
+      leaderOffsets <- (kc.getEarliestLeaderOffsets(topicPartitions)).right
     } yield {
       val fromOffsets = leaderOffsets.map {
         case (tp, lo) =>
