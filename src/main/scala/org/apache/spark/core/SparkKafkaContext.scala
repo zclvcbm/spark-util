@@ -3,7 +3,7 @@ package org.apache.spark.core
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.kafka.KafkaUtils
-import org.apache.spark.streaming.kafka.KafkaSparkContextManager
+import org.apache.spark.streaming.kafka.SparkContextKafkaManager
 import scala.reflect.ClassTag
 import kafka.message.MessageAndMetadata
 import kafka.serializer.Decoder
@@ -28,17 +28,17 @@ class SparkKafkaContext {
   }
   
   def getRDDOffset[T](rdd:RDD[T])={
-    KafkaSparkContextManager.getRDDConsumerOffsets(rdd)
+    SparkContextKafkaManager.getRDDConsumerOffsets(rdd)
   }
   def getLastOffset(topics: Set[String], kp: Map[String, String])={
-    KafkaSparkContextManager.getLatestOffsets(topics, kp)
+    SparkContextKafkaManager.getLatestOffsets(topics, kp)
   }
   /**
    * 将当前的topic的groupid更新至最新的offsets
    */
   def updataOffsetToLastest(topics: Set[String], kp: Map[String, String]) = {
-    val lastestOffsets = KafkaSparkContextManager.getLatestOffsets(topics, kp)
-    KafkaSparkContextManager.updateConsumerOffsets(kp, lastestOffsets)
+    val lastestOffsets = SparkContextKafkaManager.getLatestOffsets(topics, kp)
+    SparkContextKafkaManager.updateConsumerOffsets(kp, lastestOffsets)
     lastestOffsets
   }
  
@@ -46,13 +46,13 @@ class SparkKafkaContext {
    * 为 sc提供更新offset的功能
    */
   def updateRDDOffsets[T](kp: Map[String, String], groupId: String, rdd: RDD[T]) {
-    KafkaSparkContextManager.updateRDDOffset(kp, groupId, rdd)
+    SparkContextKafkaManager.updateRDDOffset(kp, groupId, rdd)
   }
   /**
    * 为 sc提供更新offset的功能
    */
   def updateConsumerOffsets(kp: Map[String, String], offsets: Map[TopicAndPartition, Long]) {
-    KafkaSparkContextManager.updateConsumerOffsets(kp, offsets)
+    SparkContextKafkaManager.updateConsumerOffsets(kp, offsets)
   }
   /**
    * 创建 kafkaDataRDD
@@ -61,7 +61,7 @@ class SparkKafkaContext {
     kp: Map[String, String],
     topics: Set[String],
     msgHandle: (MessageAndMetadata[K, V]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[K, V, KD, VD, R](sparkcontext, kp, topics, null, msgHandle)
+    SparkContextKafkaManager.createKafkaRDD[K, V, KD, VD, R](sparkcontext, kp, topics, null, msgHandle)
   }
     /**
    * 创建 kafkaDataRDD
@@ -70,7 +70,7 @@ class SparkKafkaContext {
     kp: Map[String, String],
     topics: Set[String],
     msgHandle: (MessageAndMetadata[String, String]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sparkcontext, kp, topics, null, msgHandle)
+    SparkContextKafkaManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sparkcontext, kp, topics, null, msgHandle)
   }
   /**
    * 创建kafkaRDD 但是提供fromOffset
@@ -80,7 +80,7 @@ class SparkKafkaContext {
     topics: Set[String],
     fromOffset: Map[TopicAndPartition, Long],
     msgHandle: (MessageAndMetadata[K, V]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[K, V, KD, VD, R](sparkcontext, kp, topics, fromOffset, msgHandle)
+    SparkContextKafkaManager.createKafkaRDD[K, V, KD, VD, R](sparkcontext, kp, topics, fromOffset, msgHandle)
   }
   /**
    * 现在读取条数（每个分区）
@@ -90,7 +90,7 @@ class SparkKafkaContext {
     topics: Set[String],
     maxMessagesPerPartition: Int,
     msgHandle: (MessageAndMetadata[String, String]) => R) = {
-    KafkaSparkContextManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sparkcontext, kp, topics, null, maxMessagesPerPartition, msgHandle)
+    SparkContextKafkaManager.createKafkaRDD[String, String, StringDecoder, StringDecoder, R](sparkcontext, kp, topics, null, maxMessagesPerPartition, msgHandle)
   }
 }
 object SparkKafkaContext extends SparkKafkaConfsKey {

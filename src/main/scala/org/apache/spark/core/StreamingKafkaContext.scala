@@ -6,11 +6,11 @@ import org.apache.spark.streaming.Duration
 import scala.reflect.ClassTag
 import kafka.common.TopicAndPartition
 import kafka.message.MessageAndMetadata
-import org.apache.spark.streaming.kafka.KafkaSparkStreamManager
+import org.apache.spark.streaming.kafka.StreamingKafkaManager
 import kafka.serializer.StringDecoder
 import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.common.util.Configuration
-import org.apache.spark.streaming.kafka.KafkaSparkContextManager
+import org.apache.spark.streaming.kafka.SparkContextKafkaManager
 import org.apache.spark.rdd.RDD
 import org.apache.spark.common.util.KafkaConfig
 
@@ -36,12 +36,12 @@ class StreamingKafkaContext {
   }
   //将当前的topic的groupid更新至最新的offsets
   def updataOffsetToLastest(topics: Set[String], kp: Map[String, String]) = {
-    val lastestOffsets = KafkaSparkContextManager.getLatestOffsets(topics, kp)
-    KafkaSparkContextManager.updateConsumerOffsets(kp, lastestOffsets)
+    val lastestOffsets = SparkContextKafkaManager.getLatestOffsets(topics, kp)
+    SparkContextKafkaManager.updateConsumerOffsets(kp, lastestOffsets)
     lastestOffsets
   }
   def getLastOffset(topics: Set[String], kp: Map[String, String])={
-    KafkaSparkContextManager.getLatestOffsets(topics, kp)
+    SparkContextKafkaManager.getLatestOffsets(topics, kp)
   }
   /**
    * 更新rdd的offset
@@ -50,11 +50,11 @@ class StreamingKafkaContext {
     kp: Map[String, String],
     groupId: String,
     rdd: RDD[T]) {
-    KafkaSparkContextManager.updateRDDOffset(kp, groupId, rdd)
+    SparkContextKafkaManager.updateRDDOffset(kp, groupId, rdd)
   }
   
   def getRDDOffsets[T](rdd: RDD[T]) = {
-    KafkaSparkStreamManager.getRDDConsumerOffsets(rdd)
+    StreamingKafkaManager.getRDDConsumerOffsets(rdd)
   }
 
   def createDirectStream[R: ClassTag](
@@ -62,24 +62,24 @@ class StreamingKafkaContext {
     topics: Set[String],
     fromOffset: Map[TopicAndPartition, Long],
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, kp, topics, fromOffset, msgHandle)
+    StreamingKafkaManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, kp, topics, fromOffset, msgHandle)
   }
   def createDirectStream[R: ClassTag](
     kp: Map[String, String],
     topics: Set[String],
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, kp, topics, null, msgHandle)
+    StreamingKafkaManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, kp, topics, null, msgHandle)
   }
   def createDirectStream[R: ClassTag](
     conf: KafkaConfig,
     fromOffset: Map[TopicAndPartition, Long],
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, fromOffset, msgHandle)
+    StreamingKafkaManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, fromOffset, msgHandle)
   }
   def createDirectStream[R: ClassTag](
     conf: KafkaConfig,
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
-    KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, null, msgHandle)
+    StreamingKafkaManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, null, msgHandle)
   }
 }
 object StreamingKafkaContext extends SparkKafkaConfsKey {
@@ -91,7 +91,7 @@ object StreamingKafkaContext extends SparkKafkaConfsKey {
     rdd: RDD[T]) {
     if (kp.contains("group.id")) {
       val groupid = kp.get("group.id").get
-      KafkaSparkContextManager.updateRDDOffset(kp, groupid, rdd)
+      SparkContextKafkaManager.updateRDDOffset(kp, groupid, rdd)
     }else println("No Group Id To UpdateRDDOffsets")
   }
 }
