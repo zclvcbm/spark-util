@@ -12,7 +12,7 @@ import org.apache.spark.streaming.dstream.InputDStream
 import org.apache.spark.common.util.Configuration
 import org.apache.spark.streaming.kafka.KafkaSparkContextManager
 import org.apache.spark.rdd.RDD
-import org.apache.spark.common.util.KafkaConfiguration
+import org.apache.spark.common.util.KafkaConfig
 
 class StreamingKafkaContext {
   var streamingContext: StreamingContext = null
@@ -71,13 +71,13 @@ class StreamingKafkaContext {
     KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, kp, topics, null, msgHandle)
   }
   def createDirectStream[R: ClassTag](
-    conf: KafkaConfiguration,
+    conf: KafkaConfig,
     fromOffset: Map[TopicAndPartition, Long],
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
     KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, fromOffset, msgHandle)
   }
   def createDirectStream[R: ClassTag](
-    conf: KafkaConfiguration,
+    conf: KafkaConfig,
     msgHandle: (MessageAndMetadata[String, String]) => R): InputDStream[R] = {
     KafkaSparkStreamManager.createDirectStream[String, String, StringDecoder, StringDecoder, R](streamingContext, conf, null, msgHandle)
   }
