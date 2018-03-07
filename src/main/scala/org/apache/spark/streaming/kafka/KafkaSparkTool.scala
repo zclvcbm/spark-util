@@ -172,12 +172,47 @@ private[spark] trait KafkaSparkTool {
     fromOffsets
   }
   /**
+   *
+   */
+  def findLeaders(kp: Map[String, String], topics: Set[TopicAndPartition]) = {
+    if (kc == null) {
+      kc = new KafkaCluster(kp)
+    }
+    kc.findLeaders(topics).fold(
+      errs => throw new SparkException(errs.mkString("\n")),
+      ok => ok)
+  }
+  /**
+   *
+   */
+  def latestLeaderOffsets(
+    kp: Map[String, String],
+    retries: Int,
+    currentOffsets: Map[TopicAndPartition, Long]): Map[TopicAndPartition, LeaderOffset] = {
+    if (kc == null) {
+      kc = new KafkaCluster(kp)
+    }
+    val o = kc.getLatestLeaderOffsets(currentOffsets.keySet)
+    // Either.fold would confuse @tailrec, do it manually
+    if (o.isLeft) {
+      val err = o.left.get.toString
+      if (retries <= 0) {
+        throw new SparkException(err)
+      } else {
+        Thread.sleep(kc.config.refreshLeaderBackoffMs)
+        latestLeaderOffsets(kp, retries - 1, currentOffsets)
+      }
+    } else {
+      o.right.get
+    }
+  }
+  /**
    * @author LMQ
    * @description 将某个groupid的偏移量更新至最新的offset
    * @description 主要是用于过滤脏数据。如果kakfa某个时间段进来很多废弃的数据，你想跳过这些数据，可以在程序开始的时候使用这个方法来跳过数据
    */
   def updataOffsetToLastest(topics: Set[String], kp: Map[String, String]) = {
-    val lastestOffsets = KafkaSparkContextManager.getLatestOffsets(topics, kp)
+    val lastestOffsets = getLatestOffsets(topics, kp)
     updateConsumerOffsets(kp, kp.get("group.id").get, lastestOffsets)
     lastestOffsets
   }
