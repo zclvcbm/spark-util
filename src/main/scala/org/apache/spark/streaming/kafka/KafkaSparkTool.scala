@@ -7,8 +7,14 @@ import org.apache.spark.rdd.RDD
 import java.util.Properties
 import org.apache.spark.Logging
 import org.slf4j.LoggerFactory
+/**
+ * @author LMQ
+ * @description 读取kafka，操作offset等操作工具
+ * @description 只用于spark包使用
+ */
 private[spark] trait KafkaSparkTool {
   var logname = "KafkaSparkTool" //外部可重写
+  lazy val defualtFrom: String = "LAST"
   lazy val log = LoggerFactory.getLogger(logname)
   var kc: KafkaCluster = null
   val GROUP_ID = "group.id"
@@ -16,15 +22,24 @@ private[spark] trait KafkaSparkTool {
   val WRONG_GROUP_FROM = "wrong.groupid.from" //新用户或者过期用户 重新读取的点 （最新或者最旧）
   val maxMessagesPerPartitionKEY = "spark.streaming.kafka.maxRatePerPartition"
   /**
+   * @author LMQ
    * @description init KafkaCluster
    */
   def instance(
-      kp: Map[String, String]) {
+    kp: Map[String, String]) {
     if (kc == null) kc = new KafkaCluster(kp)
   }
   /**
-   * @description get consumer offset
-   * @description 
+   * @author LMQ
+   * @description 获取kakfa消费者的offset
+   * @param kp ： kafka的配置
+   * @param groupId：组名，用于唯一识别kakfa消费者身份
+   * @param topics ：操作的topic列表
+   * @attention 有几种情况要注意：
+   *  1 ：如果这个groupid从未消费过
+   *  2 :如果消费过，但是消费者记录的偏移量过期，或者超过了LAST。
+   *  以上两种情况
+   *  从何读起将取决于配置 （wrong.groupid.from）= > ( LAST / EARLIEST )
    */
   def getConsumerOffset(
     kp: Map[String, String],
@@ -69,27 +84,29 @@ private[spark] trait KafkaSparkTool {
               }
             } else {
               offsets += (tp -> n)
-            } //消费者的offsets正常
+            }
         })
       } else {
-        log.warn(" New Group ID : " + groupId)
-        log.warn(" Last_Earlies : " + last_earlies)
+        log.warn(" NEW  GROUP   ID  : " + groupId)
+        log.warn(" NEW  GROUP  FROM : " + last_earlies)
         var newgroupOffsets = last_earlies match {
           case "EARLIEST" => kc.getEarliestLeaderOffsets(partitions).right.get
           case _          => kc.getLatestLeaderOffsets(partitions).right.get
         }
-        newgroupOffsets.foreach {
-          case (tp, offset) =>
-            offsets += (tp -> offset.offset)
-        }
         //解决冷启动问题，更新一个初始为0的偏移量记录。下次启动就不会是新group了
-        updateConsumerOffsets(kp, groupId, newgroupOffsets.map { case (tp, offset) => (tp -> 0L) })
+        updateConsumerOffsets(kp, groupId,
+          newgroupOffsets.map {
+            case (tp, offset) =>
+              offsets += (tp -> offset.offset)
+              (tp -> offset.offset)
+          })
       }
     }
     offsets
   }
   /**
-   * 更新offset by group id
+   * @author LMQ
+   * @description 更新消费者的offset至zookeeper
    */
   def updateConsumerOffsets(
     kp: Map[String, String],
@@ -101,24 +118,22 @@ private[spark] trait KafkaSparkTool {
       log.error(s"Error updating the offset to Kafka cluster: ${o.left.get}")
   }
   /**
-   * 更新offset
+   * @author LMQ
+   * @description 更新消费者的offset至zookeeper
    */
   def updateConsumerOffsets(
     kp: Map[String, String],
     offsets: Map[TopicAndPartition, Long]): Unit = {
-    instance(kp)
     val groupId = kp.get(GROUP_ID).get
-    val o = kc.setConsumerOffsets(groupId, offsets)
-    if (o.isLeft)
-      println(s"Error updating the offset to Kafka cluster: ${o.left.get}")
+    updateConsumerOffsets(kp, groupId, offsets)
   }
   /**
+   * @author LMQ
    * @description 获取最新的offset
-   *
    */
   def getLatestOffsets(
-      topics: Set[String], 
-      kafkaParams: Map[String, String]) = {
+    topics: Set[String],
+    kafkaParams: Map[String, String]) = {
     instance(kafkaParams)
     var fromOffsets = (for {
       topicPartitions <- kc.getPartitions(topics).right
@@ -135,6 +150,7 @@ private[spark] trait KafkaSparkTool {
     fromOffsets
   }
   /**
+   * @author LMQ
    * @description 获取最早的offset
    */
   def getEarliestOffsets(
@@ -156,7 +172,9 @@ private[spark] trait KafkaSparkTool {
     fromOffsets
   }
   /**
-   * 将当前的topic的groupid更新至最新的offsets
+   * @author LMQ
+   * @description 将某个groupid的偏移量更新至最新的offset
+   * @description 主要是用于过滤脏数据。如果kakfa某个时间段进来很多废弃的数据，你想跳过这些数据，可以在程序开始的时候使用这个方法来跳过数据
    */
   def updataOffsetToLastest(topics: Set[String], kp: Map[String, String]) = {
     val lastestOffsets = KafkaSparkContextManager.getLatestOffsets(topics, kp)
