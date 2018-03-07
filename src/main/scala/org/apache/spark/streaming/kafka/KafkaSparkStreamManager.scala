@@ -41,12 +41,12 @@ extends KafkaSparkTool {
     val groupId = kp.get(GROUP_ID).get
     val consumerOffsets: Map[TopicAndPartition, Long] =
       if (fromOffset == null) {
-        val last =if (kp.contains(LAST_OR_CONSUMER)) kp.get(LAST_OR_CONSUMER).get
+        val last =if (kp.contains(KAFKA_CONSUMER_FROM)) kp.get(KAFKA_CONSUMER_FROM).get
                   else lastOrConsum
         last.toUpperCase match {
           case "LAST"   => getLatestOffsets(topics, kp)
           case "CONSUM" => getConsumerOffset(kp, groupId, topics)
-          case _          => log.error(s"""${LAST_OR_CONSUMER} must LAST or CONSUM,defualt is LAST""");getLatestOffsets(topics, kp)
+          case _          => log.error(s"""${KAFKA_CONSUMER_FROM} must LAST or CONSUM,defualt is LAST""");getLatestOffsets(topics, kp)
         }
       } else fromOffset
     consumerOffsets.foreach(x=>log.info(x.toString))
@@ -79,8 +79,8 @@ extends KafkaSparkTool {
     val topics=conf.topics
     val consumerOffsets: Map[TopicAndPartition, Long] =
       if (fromOffset == null) {
-        val last =if (kp.contains(LAST_OR_CONSUMER)) kp.get(LAST_OR_CONSUMER).get
-                  else if(conf.containsKey(LAST_OR_CONSUMER)) conf.get(LAST_OR_CONSUMER)
+        val last =if (kp.contains(KAFKA_CONSUMER_FROM)) kp.get(KAFKA_CONSUMER_FROM).get
+                  else if(conf.containsKey(KAFKA_CONSUMER_FROM)) conf.get(KAFKA_CONSUMER_FROM)
                   else lastOrConsum
         last.toUpperCase match {
           case "LAST"   => getLatestOffsets(topics, kp)

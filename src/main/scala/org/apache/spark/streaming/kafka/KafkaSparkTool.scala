@@ -12,8 +12,8 @@ private[spark] trait KafkaSparkTool {
   lazy val log = LoggerFactory.getLogger(logname)
   var kc: KafkaCluster = null
   val GROUP_ID = "group.id"
-  val LAST_OR_CONSUMER = "kafka.consumer.from"
-  val LAST_OR_EARLIEST = "wrong.groupid.from" //新用户或者过期用户 重新读取的点 （最新或者最旧）
+  val KAFKA_CONSUMER_FROM = "kafka.consumer.from" //kakfa读取起点(CONSUM / LAST / EARLIEST / CUSTOM)
+  val WRONG_GROUP_FROM = "wrong.groupid.from" //新用户或者过期用户 重新读取的点 （最新或者最旧）
   val maxMessagesPerPartitionKEY = "spark.streaming.kafka.maxRatePerPartition"
   /**
    * init KafkaCluster
@@ -27,7 +27,8 @@ private[spark] trait KafkaSparkTool {
   def getConsumerOffset(
     kp: Map[String, String],
     groupId: String,
-    topics: Set[String]) = {
+    topics: Set[String]
+    ) = {
     instance(kp)
     var offsets: Map[TopicAndPartition, Long] = Map()
     topics.foreach { topic =>
@@ -36,7 +37,7 @@ private[spark] trait KafkaSparkTool {
       if (partitionsE.isLeft) throw new SparkException("get kafka partition failed:")
       val partitions = partitionsE.right.get
       //过期或者是新的groupid从哪开始读取
-      val last_earlies = if (kp.contains(LAST_OR_EARLIEST)) { kp.get(LAST_OR_EARLIEST).get.toUpperCase() } else "LAST"
+      val last_earlies = if (kp.contains(WRONG_GROUP_FROM)) { kp.get(WRONG_GROUP_FROM).get.toUpperCase() } else "LAST"
       val consumerOffsetsE = kc.getConsumerOffsets(groupId, partitions) //获取这个topic的每个patition的消费信息      
       if (consumerOffsetsE.isLeft) hasConsumed = false
       if (hasConsumed) {
@@ -56,8 +57,8 @@ private[spark] trait KafkaSparkTool {
             val lastoffset = partLastOffsets.get(tp).offset
             if (n > lastoffset || n < earliestLeaderOffset) { //如果offset超过了最新的//消费过，但是过时了，就从最新开始消费
               log.warn("-- Consumer offset is OutTime --- "+tp+"->"+n)
-              if (kp.contains(LAST_OR_EARLIEST)) {
-                kp.get(LAST_OR_EARLIEST).get.toUpperCase() match {
+              if (kp.contains(WRONG_GROUP_FROM)) {
+                kp.get(WRONG_GROUP_FROM).get.toUpperCase() match {
                   case "EARLIEST" => offsets += (tp -> earliestLeaderOffset)
                   case _          => offsets += (tp -> lastoffset)
                 }
