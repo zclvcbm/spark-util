@@ -36,7 +36,7 @@ private[spark] object SparkContextKafkaManager
     kp: Map[String, String],
     topics: Set[String],
     fromOffset: Map[TopicAndPartition, Long],
-    messageHandler: MessageAndMetadata[K, V] => R) = {
+    messageHandler: MessageAndMetadata[K, V] => R = msgHandle) = {
     if (kp == null || !kp.contains(GROUP_ID))
       throw new SparkException(s"kafkaParam is Null or ${GROUP_ID} is not setted")
     instance(kp)
@@ -84,7 +84,7 @@ private[spark] object SparkContextKafkaManager
     topics: Set[String],
     fromOffset: Map[TopicAndPartition, Long],
     maxMessagesPerPartition: Int,
-    messageHandler: MessageAndMetadata[K, V] => R) = {
+    messageHandler: MessageAndMetadata[K, V] => R = msgHandle) = {
     if (kp == null || !kp.contains(GROUP_ID))
       throw new SparkException(s"kafkaParam is Null or ${GROUP_ID} is not setted")
     instance(kp)
