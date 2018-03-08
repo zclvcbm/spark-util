@@ -7,31 +7,30 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.MapPartitionsRDD
 import org.apache.spark.Partition
 import org.apache.spark.TaskContext
-private[kafka]
-class KafkaDataRDD[
-  K: ClassTag,
-  V: ClassTag,
-  U <: Decoder[_]: ClassTag,
-  T <: Decoder[_]: ClassTag,
-  R: ClassTag](prev: KafkaRDD[K,V,U,T,R]) 
-extends RDD[R](prev) with HasOffsetRanges{
-  /**
-   * 使rdd具备更新offset的能力
-   */
-  def updateOffsets(kp: Map[String, String], groupid: String){
+/**
+ * @author LMQ
+ * @description 自定义一个kafkaRDD
+ * @description 具备的特性： 使rdd具备更新offset的能力
+ * @description 当然也可以再重写一些其他特性
+ */
+private[kafka] 
+class KafkaDataRDD[K: ClassTag, V: ClassTag, U <: Decoder[_]: ClassTag, T <: Decoder[_]: ClassTag, R: ClassTag](prev: KafkaRDD[K, V, U, T, R])
+    extends RDD[R](prev) with HasOffsetRanges {
+
+  def updateOffsets(kp: Map[String, String], groupid: String) {
     StreamingKafkaManager.updateRDDOffset(kp, groupid, this)
   }
-  def updateOffsets(kp: Map[String, String]):Boolean={
-    if(kp.contains("group.id")){
-      StreamingKafkaManager.updateRDDOffset(kp, kp("group.id"), this)
+  def updateOffsets(kp: Map[String, String]): Boolean = {
+    if (kp.contains("group.id")) {
+      updateOffsets(kp, kp("group.id"))
       true
-    }else{
-      false 
+    } else {
+      false
     }
   }
-  def getRDDOffsets() = {StreamingKafkaManager.getRDDConsumerOffsets(this)}
-  override def offsetRanges()=prev.offsetRanges
+  def getRDDOffsets() = { StreamingKafkaManager.getRDDConsumerOffsets(this) }
+  override def offsetRanges() = prev.offsetRanges
   override def getPartitions: Array[Partition] = prev.getPartitions
   override def getPreferredLocations(thePart: Partition): Seq[String] = prev.getPreferredLocations(thePart)
-  override def compute(split: Partition, context: TaskContext) =prev.compute(split, context)
+  override def compute(split: Partition, context: TaskContext) = prev.compute(split, context)
 }
