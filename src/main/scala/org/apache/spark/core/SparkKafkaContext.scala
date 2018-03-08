@@ -179,7 +179,7 @@ class SparkKafkaContext {
    * @param maxMessagesPerPartition:每个分区最多拉取多少条
    * @attention 这里没有传 msgHandle 则使用默认的msgHandle （输出为Tuple2(topic,msg）
    */
-  def kafkaRDD[R: ClassTag](
+  def kafkaRDD(
     kp: Map[String, String],
     topics: Set[String],
     maxMessagesPerPartition: Int) = {
