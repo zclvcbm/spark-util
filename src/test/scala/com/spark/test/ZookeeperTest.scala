@@ -1,4 +1,4 @@
-/*package com.spark.test
+package com.spark.test
 
 import org.apache.zookeeper.ZooKeeper
 import org.apache.zookeeper.Watcher
@@ -87,4 +87,4 @@ object ZookeeperTest {
     val zkClient = new ZkClient(zk, 10000, 10000, ZKStringSerializer)
     zkClient
   }
-}*/
+}
