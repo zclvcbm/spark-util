@@ -4,14 +4,15 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.Seconds
-import org.apache.spark.streaming.kafka.KafkaSparkStreamManager
 import kafka.serializer.StringDecoder
 import org.slf4j.LoggerFactory
 import org.apache.spark.common.util.Configuration
 import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.core.StreamingKafkaContext
 import org.apache.spark.core.SparkKafkaContext
-import org.apache.spark.common.util.KafkaConfiguration
+import org.apache.spark.common.util.KafkaConfig
+import org.apache.spark.common.util.ConfigurationFactoryTool
+import kafka.serializer.StringDecoder
 object StreamingKafkaContextTest {
   PropertyConfigurator.configure("conf/log4j.properties")
   def main(args: Array[String]): Unit = {
@@ -28,7 +29,10 @@ object StreamingKafkaContextTest {
       StreamingKafkaContext.WRONG_FROM -> "last",//EARLIEST
       StreamingKafkaContext.CONSUMER_FROM -> "consum")
     val topics = Set("smartadsdeliverylog")
-    val ds = ssc.createDirectStream[(String, String)](kp, topics, msgHandle)
+    val ds = ssc
+    .createDirectStream[
+      String,String,StringDecoder,StringDecoder,((String, Int, Long), String)](
+        kp, topics, msgHandle2)
     ds.foreachRDD { rdd =>
       println(rdd.count)
       //rdd.foreach(println)
@@ -44,13 +48,15 @@ object StreamingKafkaContextTest {
    */
   def runJobWithConf() {
     val conf = new ConfigurationTest()
-    initConf("conf/config.properties", conf)
+    ConfigurationFactoryTool.initConf("conf/config.properties", conf)
     initJobConf(conf)
     println(conf.getKV())
     val scf = new SparkConf().setMaster("local[2]").setAppName("Test")
     val sc = new SparkContext(scf)
     val ssc = new StreamingKafkaContext(sc, Seconds(5))
-    val ds = ssc.createDirectStream(conf, msgHandle)
+    val ds = ssc.createDirectStream[
+      String,String,StringDecoder,StringDecoder,((String, Int, Long), String)](
+          conf, msgHandle2)
     ds.foreachRDD { rdd => rdd.foreach(println) }
     ssc.start()
     ssc.awaitTermination()
@@ -59,7 +65,7 @@ object StreamingKafkaContextTest {
   /**
    * 初始化配置文件
    */
-  def initJobConf(conf: KafkaConfiguration) {
+  def initJobConf(conf: KafkaConfig) {
     var kp = Map[String, String](
       "metadata.broker.list" -> brokers,
       "serializer.class" -> "kafka.serializer.StringEncoder",

@@ -7,6 +7,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.log4j.PropertyConfigurator
 import org.apache.spark.core.StreamingKafkaContext
 import org.apache.spark.func.tool._
+import kafka.serializer.StringDecoder
 object KafkaWriterTest{
    PropertyConfigurator.configure("conf/log4j.properties")
   def main(args: Array[String]): Unit = {
@@ -21,7 +22,8 @@ object KafkaWriterTest{
       "group.id" -> "test",
       "kafka.last.consum" -> "consum")
     val topics = Set("test")
-    val ds = ssc.createDirectStream[(String, String)](kp, topics, msgHandle)
+    val ds = ssc.createDirectStream[
+      String,String,StringDecoder,StringDecoder,(String, String)](kp, topics, msgHandle)
     ds.foreachRDD { rdd => 
       rdd.foreach(println)
       rdd.map(_._2)
